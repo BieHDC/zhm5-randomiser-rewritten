@@ -1,0 +1,174 @@
+#ifndef TYPES_H
+#define TYPES_H
+
+#define scenarioNamesLEN 45
+char scenarioNames[scenarioNamesLEN][32] = { 
+    "NONE",
+    "LOCATION_PEACOCK_CASUAL",
+    "LOCATION_PEACOCK_PROFESSIONAL",
+    "LOCATION_PEACOCK_MASTER",
+    "LOCATION_OCTOPUS_CASUAL",
+    "LOCATION_OCTOPUS_PROFESSIONAL",
+    "LOCATION_OCTOPUS_MASTER",
+    "LOCATION_SPIDER_CASUAL",
+    "LOCATION_SPIDER_PROFESSIONAL",
+    "LOCATION_SPIDER_MASTER",
+    "LOCATION_TIGER_CASUAL",
+    "LOCATION_TIGER_PROFESSIONAL",
+    "LOCATION_TIGER_MASTER",
+    "LOCATION_BULL_CASUAL",
+    "LOCATION_BULL_PROFESSIONAL",
+    "LOCATION_BULL_MASTER",
+    "LOCATION_SNOWCRANE_CASUAL",
+    "LOCATION_SNOWCRANE_PROFESSIONAL",
+    "LOCATION_SNOWCRANE_MASTER",
+    "LOCATION_SHEEP_CASUAL",
+    "LOCATION_SHEEP_PROFESSIONAL",
+    "LOCATION_SHEEP_MASTER",
+    "LOCATION_FLAMINGO_CASUAL",
+    "LOCATION_FLAMINGO_PROFESSIONAL",
+    "LOCATION_FLAMINGO_MASTER",
+    "LOCATION_HIPPO_CASUAL",
+    "LOCATION_HIPPO_PROFESSIONAL",
+    "LOCATION_HIPPO_MASTER",
+    "LOCATION_MONGOOSE_CASUAL",
+    "LOCATION_MONGOOSE_PROFESSIONAL",
+    "LOCATION_MONGOOSE_MASTER",
+    "LOCATION_SKUNK_CASUAL",
+    "LOCATION_SKUNK_PROFESSIONAL",
+    "LOCATION_SKUNK_MASTER",
+    "LOCATION_MAGPIE_CASUAL",
+    "LOCATION_MAGPIE_PROFESSIONAL",
+    "LOCATION_MAGPIE_MASTER",
+    "LOCATION_RACCOON_CASUAL",
+    "LOCATION_RACCOON_PROFESSIONAL",
+    "LOCATION_RACCOON_MASTER",
+    "LOCATION_STINGRAY_CASUAL",
+    "LOCATION_STINGRAY_PROFESSIONAL",
+    "LOCATION_STINGRAY_MASTER",
+    "LOCATION_SNIPER",
+    "LOCATION_SKIPME"
+};
+
+typedef enum {
+    NONE = 0,   //for unknown maps where we enable the thing anyway
+    LOCATION_PEACOCK_CASUAL,
+    LOCATION_PEACOCK_PROFESSIONAL,
+    LOCATION_PEACOCK_MASTER,
+    LOCATION_OCTOPUS_CASUAL,
+    LOCATION_OCTOPUS_PROFESSIONAL,
+    LOCATION_OCTOPUS_MASTER,
+    LOCATION_SPIDER_CASUAL,
+    LOCATION_SPIDER_PROFESSIONAL,
+    LOCATION_SPIDER_MASTER,
+    LOCATION_TIGER_CASUAL,
+    LOCATION_TIGER_PROFESSIONAL,
+    LOCATION_TIGER_MASTER,
+    LOCATION_BULL_CASUAL,
+    LOCATION_BULL_PROFESSIONAL,
+    LOCATION_BULL_MASTER,
+    LOCATION_SNOWCRANE_CASUAL,
+    LOCATION_SNOWCRANE_PROFESSIONAL,
+    LOCATION_SNOWCRANE_MASTER,
+    LOCATION_SHEEP_CASUAL,
+    LOCATION_SHEEP_PROFESSIONAL,
+    LOCATION_SHEEP_MASTER,
+    LOCATION_FLAMINGO_CASUAL,
+    LOCATION_FLAMINGO_PROFESSIONAL,
+    LOCATION_FLAMINGO_MASTER,
+    LOCATION_HIPPO_CASUAL,
+    LOCATION_HIPPO_PROFESSIONAL,
+    LOCATION_HIPPO_MASTER,
+    LOCATION_MONGOOSE_CASUAL,
+    LOCATION_MONGOOSE_PROFESSIONAL,
+    LOCATION_MONGOOSE_MASTER,
+    LOCATION_SKUNK_CASUAL,
+    LOCATION_SKUNK_PROFESSIONAL,
+    LOCATION_SKUNK_MASTER,
+    LOCATION_MAGPIE_CASUAL,
+    LOCATION_MAGPIE_PROFESSIONAL,
+    LOCATION_MAGPIE_MASTER,
+    LOCATION_RACCOON_CASUAL,
+    LOCATION_RACCOON_PROFESSIONAL,
+    LOCATION_RACCOON_MASTER,
+    LOCATION_STINGRAY_CASUAL,
+    LOCATION_STINGRAY_PROFESSIONAL,
+    LOCATION_STINGRAY_MASTER,
+    LOCATION_SNIPER, //for snipermaps with special handling needed
+    LOCATION_SKIPME, //for maps where we disable the whole thing
+} location;
+
+
+
+#define strategy_namesLEN 10
+char strategy_names[strategy_namesLEN][16] = {
+	"DISABLED",
+	"DEFAULT",
+	"FUN",
+	"EASY",
+	"MEDIUM",
+	"HARD",
+	"ES_CUSTOM1",
+	"ES_CUSTOM2",
+	"ES_CUSTOM3",
+	"ES_CUSTOM4"
+};
+
+typedef enum
+{
+	ES_DISABLED = 0,
+	ES_DEFAULT = 1,
+	ES_FUN = 2,
+	ES_EASY = 3,
+	ES_MEDIUM = 4,
+	ES_HARD = 5,
+	ES_CUSTOM1 = 6,
+	ES_CUSTOM2 = 7,
+	ES_CUSTOM3 = 8,
+	ES_CUSTOM4 = 9
+} e_strategy;
+
+typedef struct {
+	char* strategy_name;
+	e_strategy strategy_enum;
+} mapper;
+
+#define enumfromstringLEN 10
+mapper enumfromstring[enumfromstringLEN] = {
+	{strategy_names[0], ES_DISABLED},
+	{strategy_names[1], ES_DEFAULT},
+	{strategy_names[2], ES_FUN},
+	{strategy_names[3], ES_EASY},
+	{strategy_names[4], ES_MEDIUM},
+	{strategy_names[5], ES_HARD},
+	{strategy_names[6], ES_CUSTOM1},
+	{strategy_names[7], ES_CUSTOM2},
+	{strategy_names[8], ES_CUSTOM3},
+	{strategy_names[9], ES_CUSTOM4}
+};
+
+e_strategy getStrategyFromString(char* stratstr, int32_t* isExtended) {
+	for (size_t i = 0; i < enumfromstringLEN; i++) {
+		if (strnstr(stratstr, enumfromstring[i].strategy_name, 
+				strlen(enumfromstring[i].strategy_name))) {
+			if (strstr(stratstr, "+"))
+				*isExtended = 1;
+			else 
+				*isExtended = 0;
+			return enumfromstring[i].strategy_enum;
+		}
+	}
+	return ES_DISABLED;
+}
+
+void printStrategyFromEnum(e_strategy strat) {
+	for (size_t i = 0; i < enumfromstringLEN; i++) {
+		if (enumfromstring[i].strategy_enum == strat) {
+			INFO("Strategy is >%s<", enumfromstring[i].strategy_name);
+			return;
+		}
+	}
+	ERR("Unknown Strategy");
+}
+
+#endif
