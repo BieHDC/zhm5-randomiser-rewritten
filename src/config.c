@@ -1,24 +1,22 @@
 #ifndef CONFIG_C
 #define CONFIG_C
 
-
-const char default_string[] = "DEFAULT";
 #define iniStringBufSize 32
 
-#define LOAD_INI_ENTRY(name, cat, default_) \
-	name = GetPrivateProfileIntA(cat, #name, default_, fullpath); \
-	INFO("%s=%i", #name, name);
+#define LOAD_INI_ENTRY(name, cat, default_) 						\
+	name = GetPrivateProfileIntA(cat, #name, default_, fullpath); 	\
+	INFO("%s=%lu", #name, name);
 
-#define LOAD_INI_STRING_ENTRY(name, cat, default_) \
-	char strbuf_##name[iniStringBufSize]; \
-	GetPrivateProfileStringA(cat, #name, default_, strbuf_##name, iniStringBufSize, fullpath); \
-	char* name = cstrdup(strbuf_##name); \
+#define LOAD_INI_STRING_ENTRY(name, cat, default_) 												\
+	char strbuf_##name[iniStringBufSize]; 														\
+	GetPrivateProfileStringA(cat, #name, default_, strbuf_##name, iniStringBufSize, fullpath); 	\
+	char* name = cstrdup(strbuf_##name); 														\
 	INFO("%s=%s", #name, name);
 
 void loadConfig() {
 	char* basepath = getBasePath();
 	if (!basepath) {
-		ERR("Basepath error");
+		ERR("Basepath Error, loading defaults");
 		goto load_defaults1;
 	} else {
 		SPAM("Basepath is >%s<", basepath);
@@ -27,7 +25,7 @@ void loadConfig() {
 	char* fullpath = 0;
 	cstrcat(&fullpath, basepath, (const char*)&"ZHM5Randomizer.ini");
 	if (!fullpath) {
-		ERR("Fullpath error");
+		ERR("Fullpath Error, loading defaults");
 		goto load_defaults2;
 	} else {
 		SPAM("Fullpath is >%s<", fullpath);
@@ -36,7 +34,7 @@ void loadConfig() {
 	INFO("Loading Config %s", fullpath);
 
 	//Randomisation Strategy
-	LOAD_INI_STRING_ENTRY(worldInventoryRandomizer, "ZHM5Randomizer", "FUN");
+	LOAD_INI_STRING_ENTRY(worldInventoryRandomizer, "ZHM5Randomizer", "FUN+");
 	cini.worldInventoryRandomizer = getStrategyFromString(worldInventoryRandomizer, 
 		&cini.worldInventoryIsExtended);
 	printStrategyFromEnum(cini.worldInventoryRandomizer);
@@ -56,7 +54,7 @@ void loadConfig() {
 		&cini.stashInventoryIsExtended);
 	printStrategyFromEnum(cini.stashInventoryRandomizer);
 
-	SPAM("Extended flags W:%i N:%i H:%i S:%i", cini.worldInventoryIsExtended, cini.npcInventoryIsExtended, 
+	INFO("Extended flags W:%i N:%i H:%i S:%i", cini.worldInventoryIsExtended, cini.npcInventoryIsExtended, 
 		cini.heroInventoryIsExtended, cini.stashInventoryIsExtended);
 
 	DWORD RNGSeed;

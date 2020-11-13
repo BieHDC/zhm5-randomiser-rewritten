@@ -94,7 +94,7 @@ typedef enum {
     LOCATION_STINGRAY_CASUAL,
     LOCATION_STINGRAY_PROFESSIONAL,
     LOCATION_STINGRAY_MASTER,
-    LOCATION_SNIPER, //for snipermaps with special handling needed
+    LOCATION_SNIPER, //for snipermaps which we ignore
     LOCATION_SKIPME, //for maps where we disable the whole thing
 } location;
 
@@ -112,10 +112,10 @@ char strategy_names[strategy_namesLEN][16] = {
 	"ES_CUSTOM2",
 	"ES_CUSTOM3",
 	"ES_CUSTOM4"
+    //"ES_CUSTOM5"
 };
 
-typedef enum
-{
+typedef enum {
 	ES_DISABLED = 0,
 	ES_DEFAULT = 1,
 	ES_FUN = 2,
@@ -126,6 +126,7 @@ typedef enum
 	ES_CUSTOM2 = 7,
 	ES_CUSTOM3 = 8,
 	ES_CUSTOM4 = 9
+    //ES_CUSTOM5 = 10
 } e_strategy;
 
 typedef struct {
@@ -135,16 +136,17 @@ typedef struct {
 
 #define enumfromstringLEN 10
 mapper enumfromstring[enumfromstringLEN] = {
-	{strategy_names[0], ES_DISABLED},
-	{strategy_names[1], ES_DEFAULT},
-	{strategy_names[2], ES_FUN},
-	{strategy_names[3], ES_EASY},
-	{strategy_names[4], ES_MEDIUM},
-	{strategy_names[5], ES_HARD},
-	{strategy_names[6], ES_CUSTOM1},
-	{strategy_names[7], ES_CUSTOM2},
-	{strategy_names[8], ES_CUSTOM3},
-	{strategy_names[9], ES_CUSTOM4}
+	{strategy_names[ES_DISABLED], ES_DISABLED},
+	{strategy_names[ES_DEFAULT], ES_DEFAULT},
+	{strategy_names[ES_FUN], ES_FUN},
+	{strategy_names[ES_EASY], ES_EASY},
+	{strategy_names[ES_MEDIUM], ES_MEDIUM},
+	{strategy_names[ES_HARD], ES_HARD},
+	{strategy_names[ES_CUSTOM1], ES_CUSTOM1},
+	{strategy_names[ES_CUSTOM2], ES_CUSTOM2},
+	{strategy_names[ES_CUSTOM3], ES_CUSTOM3},
+    {strategy_names[ES_CUSTOM4], ES_CUSTOM4}
+    //{strategy_names[ES_CUSTOM5], ES_CUSTOM5}
 };
 
 e_strategy getStrategyFromString(char* stratstr, int32_t* isExtended) {
@@ -158,6 +160,7 @@ e_strategy getStrategyFromString(char* stratstr, int32_t* isExtended) {
 			return enumfromstring[i].strategy_enum;
 		}
 	}
+    ERR("Unknow Strategy >%s<", stratstr);
 	return ES_DISABLED;
 }
 

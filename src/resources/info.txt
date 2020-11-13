@@ -1,0 +1,13 @@
+00204d1afd76ab13.REPO and fd76ef1b.REPO are from the Hitman 2 Game files.
+The (awful) convertrepositorytocfile.py converts them to a Repository.c file,
+which will then be used in the mod, eliminating runtime JSON parsing, while
+also keeping modability and dynamicy.
+If this needs to be updated, you can use quickbms and the hitmanrpkg.bms script
+to extract all files from Runtime/chunk0.rpkg and its patch files.
+I did it by starting to unpack chunk0.rpkg into a directory and then extracting
+all of the patches on top of it in the same directory, overwriting existing files.
+After thats done, head into chunk0/REPO/ and these are the json files the 
+convertrepositorytocfile.py takes in. It checks for duplicates in those files too.
+Maybe not the best and easiest way, but reliable. Just make sure you check if the
+output is still correct, since the ghost mode removal for example messed with the
+tags i used to identify such around.

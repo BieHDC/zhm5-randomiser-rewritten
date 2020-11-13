@@ -49,7 +49,6 @@ typedef struct {
 int32_t TaisShort(TArray* ta) {
 	if (ta->start_ == NULL)
 		return false; //empty array
-
 #if 0
 	ZString str;
 	memcpy_s(&str, sizeof(ZString), ta, sizeof(ZString));
@@ -63,20 +62,20 @@ int32_t TaisShort(TArray* ta) {
 		return false;
 	return true;
 #endif
-};
+}
 
 ZString* TaGetIndex(TArray* ta, size_t i) {
 	if(TaisShort(ta))
 		return &ta->t;
 	return &ta->start_[i];
-};
+}
 
 
 size_t Tasize(TArray* ta) {
 	if (TaisShort(ta))
 		return 1;
 	return ta->end_ - ta->start_;
-};
+}
 //sizeof(TArray) == 0x18;
 
 // We pass out as ptr because we add to it later again
@@ -197,13 +196,13 @@ location findMapName(ZString* zstr) {
 	// assembly:/_PRO/scenes/missions/**mapname**/<<<nonconsistentafterhere>>>
 	char* mapname = &(zstr->chars[31]);
 	size_t lenmapname = lenofmapname(mapname);
-	INFO("Mapname: >%.*s< Len: %u", lenmapname, mapname, lenmapname);
+	SPAM("Mapname: >%.*s< Len: %llu", (int)lenmapname, mapname, lenmapname);
 
 	for (size_t i = 0; i < SZMAPNAMES; i++) {
 		if (strlen((char*)&mapnames[i].mapname) != lenmapname)
 			continue;
 		if (strncasecmp((char*)&mapnames[i].mapname, mapname, lenmapname) == 0) {
-			INFO("Map is %s", (char*)&mapnames[i].mapname);
+			SPAM("Map is %s", (char*)&mapnames[i].mapname);
 			return mapnames[i].loc;
 		}
 
@@ -214,7 +213,6 @@ location findMapName(ZString* zstr) {
 int32_t isFrontend(ZString* zstr) {
 	// assembly:/_PRO/Scenes/**name**/**codename**
 	char* mapname = &(zstr->chars[22]); //offset of above string
-	size_t lenmapname = lenofmapname(mapname);
 	char front[] = "Frontend";
 	if (strncasecmp((char*)&front, mapname, strlen((char*)&front)) == 0)
 		return true;
@@ -223,13 +221,12 @@ int32_t isFrontend(ZString* zstr) {
 }
 
 location SSceneInitParametersGetLocation(SSceneInitParameters* sip) {
-	INFO("Trying to find mapname");
-	
 	if (isFrontend(&(sip->m_SceneResource)))
 		return LOCATION_SKIPME;
 
 	//if hash not found, we default to mapname::professional
 	location emap = findMapName(&(sip->m_SceneResource));
+	INFO("Found Map %s", scenarioNames[emap]);
 
 	size_t hash = 0;
 	simplezstringhash(&hash, &(sip->m_SceneResource));
@@ -242,7 +239,7 @@ location SSceneInitParametersGetLocation(SSceneInitParameters* sip) {
 		}
 		simplezstringhash(&hash, tmp);
 	}
-	INFO("Hash is >%i< >%p<", hash, hash);
+	INFO("Hash is >%i< >%p<", (int)hash, (void*)hash);
 
 	// Check if we have casual or master
 	for (size_t i = 0; i < HASHMAPLEN; i++) {

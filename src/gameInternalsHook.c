@@ -12,10 +12,9 @@ gameversion getGameVersion(void) {
 	SPAM("Get Game Version");
 	void* image_base = (void*)0x140000000;
 	IMAGE_DOS_HEADER dos_header = *(IMAGE_DOS_HEADER*)image_base;
-	SPAM("dosheader %p", dos_header);
 	IMAGE_NT_HEADERS nt_header = *(IMAGE_NT_HEADERS*)((uintptr_t)image_base + dos_header.e_lfanew);
 
-	SPAM("header at %p and timestamp is %p", nt_header, nt_header.FileHeader.TimeDateStamp);
+	SPAM("Header at %p and timestamp is %lX", (void*)&nt_header, (long unsigned)nt_header.FileHeader.TimeDateStamp);
 
 	int timestamp = nt_header.FileHeader.TimeDateStamp;
 	switch (timestamp) {
@@ -26,7 +25,7 @@ gameversion getGameVersion(void) {
 		case 0x5F8D57CA: //last update
 			return gvDX11;
 		default:
-			ERR("Unknown Game Version: %p", timestamp);
+			ERR("Unknown Game Version: %X", timestamp);
 			return gvUNK;
 
 	} //switch
@@ -58,7 +57,7 @@ uint32_t getGameFnPointers(void) {
 		gfn.pPushHeroInventoryDetour = (void*)(0x1405D7217);
 		gfn.pPushStashInventoryDetour = (void*)(0x14059039A);
 		gfn.pZEntitySceneContext_LoadScene = (void**)(0x1416AEE68);
-		return 1;
+		return true;
 	case gvDX11:
 		INFO("Game is DX11");
 		gfn.pPushItem = (void*)(0x140C24AF0);
@@ -67,18 +66,17 @@ uint32_t getGameFnPointers(void) {
 		gfn.pPushHeroInventoryDetour = (void*)(0x1405D78F7);
 		gfn.pPushStashInventoryDetour = (void*)(0x140590A7A);
 		gfn.pZEntitySceneContext_LoadScene = (void**)(0x141693D70);
-		return 1;
+		return true;
 	default:
 		MessageBoxA(NULL, "Unsupported Game Version", "", 0);
-		return 0;
+		return false;
 	} //switch
-	return 0;
+	return false;
 }
 
 
 // Hookering Logic (Better not touch)
 static void* trampoline_memory_base = NULL;
-
 
 //the functions replaced are all directly on a call with 5 bytes size fn,
 //so hooking anything else will cause issues!
@@ -119,6 +117,7 @@ void detourCall(void* hook_call_addr, const void* hook_function) {
 	int return_jmp_operand = ((long long)hook_call_addr + 5) - ((long long)trampoline_addr + 17);
 	*(int*)(trampoline_bytes + 13) = return_jmp_operand;
 	memcpy_s(trampoline_addr, sizeof(trampoline_bytes), trampoline_bytes, sizeof(trampoline_bytes));
+	SPAM("Hooked");
 }
 
 void detourVFTCall(void** vft_entry_addr, void* hook_function, void** original_fn_ptr) {
@@ -129,6 +128,7 @@ void detourVFTCall(void** vft_entry_addr, void* hook_function, void** original_f
 	VirtualProtect(vft_entry_addr, sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtection);
 	*vft_entry_addr = hook_function;
 	VirtualProtect(vft_entry_addr, sizeof(void*), oldProtection, &oldProtection);
+	SPAM("Hooked");
 }
 
 #if 0
@@ -227,19 +227,19 @@ void printzstringguidw(void* p, char* name) {
 #endif
 
 
-// pushWorldItem hooks
+// pushItem hooks
 typedef __int64(__fastcall *tPushItem)(void*, const GUID*, 
 										ZString*, void*, 
 										__int64, uint8_t, 
 										__int64*, void*, 
 										void*, char);
 
-#define DEF_pushWorldItem(inventory) 																\
-static int64_t __fastcall pushWorldItem##inventory (												\
+#define DEF_pushItem(inventory) 																	\
+static int64_t __fastcall pushItem##inventory (														\
 					void* worldInventory, const GUID* repoID, 										\
 					ZString* a3, void* a4, int64_t a5, uint8_t a6, int64_t* a7, 					\
-					void* a8, void* a9, char a10) {												\
-	SPAM("WorldPushItem for >%s< called with: %p %p", #inventory, worldInventory, repoID);			\
+					void* a8, void* a9, char a10) {													\
+	SPAM("pushItem for >%s< called", #inventory);													\
 	/* We ignore sniper maps because it just makes no sense */										\
 	if (currentmap == LOCATION_SNIPER || currentmap == LOCATION_SKIPME)								\
 		return ((tPushItem)gfn.pPushItem)(worldInventory, repoID, a3, a4, a5, a6, a7, a8, a9, a10);	\
@@ -248,10 +248,10 @@ static int64_t __fastcall pushWorldItem##inventory (												\
 	GETRANDOMITEM(id, inventory, repoID);															\
 	return ((tPushItem)gfn.pPushItem)(worldInventory, id, a3, a4, a5, a6, a7, a8, a9, a10);			\
 };
-DEF_pushWorldItem(world); //pushWorldItemworld
-DEF_pushWorldItem(npc); //pushWorldItemnpc
-DEF_pushWorldItem(hero); //pushWorldItemhero
-DEF_pushWorldItem(stash); //pushWorldItemstash
+DEF_pushItem(world); //pushItemworld
+DEF_pushItem(npc); //pushItemnpc
+DEF_pushItem(hero); //pushItemhero
+DEF_pushItem(stash); //pushItemstash
 
 
 // tLoadScene
@@ -259,7 +259,9 @@ typedef uint64_t(__fastcall *tLoadScene)(void* this_, SSceneInitParameters* scen
 
 uint64_t __fastcall LoadSceneDetour(void* this_, SSceneInitParameters* scene_init_params) {
 	SPAM("SSceneLoadObserver detour %p %p", this_, scene_init_params);
+	#ifdef DEBUG
 	SSceneInitParametersPrint(scene_init_params);
+	#endif
 	currentmap = SSceneInitParametersGetLocation(scene_init_params);
 
 	// Pick a random number if not specified in the config file
@@ -275,7 +277,13 @@ uint64_t __fastcall LoadSceneDetour(void* this_, SSceneInitParameters* scene_ini
 		srand(cini.RNGSeed);
 	}
 
-	return ((tLoadScene)gfn.pZEntitySceneContext_LoadScene)(this_, scene_init_params);
+	preMapLoadTrigger();
+
+	uint64_t ret = ((tLoadScene)gfn.pZEntitySceneContext_LoadScene)(this_, scene_init_params);
+
+	postMapLoadTrigger();
+
+	return ret;
 }
 
 
@@ -288,10 +296,10 @@ void hookGameFunctions(void) {
 	}
 
 	SPAM("Hook Game Functions");
-	detourCall(gfn.pPushWorldInventoryDetour, pushWorldItemworld);
-	detourCall(gfn.pPushNPCInventoryDetour, pushWorldItemnpc);
-	detourCall(gfn.pPushHeroInventoryDetour, pushWorldItemhero);
-	detourCall(gfn.pPushStashInventoryDetour, pushWorldItemstash);
+	detourCall(gfn.pPushWorldInventoryDetour, pushItemworld);
+	detourCall(gfn.pPushNPCInventoryDetour, pushItemnpc);
+	detourCall(gfn.pPushHeroInventoryDetour, pushItemhero);
+	detourCall(gfn.pPushStashInventoryDetour, pushItemstash);
 	detourVFTCall(gfn.pZEntitySceneContext_LoadScene, &LoadSceneDetour, (void**)&gfn.pZEntitySceneContext_LoadScene);
 	SPAM("Game Functions hooked!");
 	return;
