@@ -13,7 +13,7 @@ typedef struct {
 	DWORD RNGSeed;
 } configINI;
 
-configINI cini = {0};
+configINI config = {0};
 
 location currentmap = LOCATION_SKIPME;
 

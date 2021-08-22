@@ -1,5 +1,5 @@
-#ifndef STRATEGY_C
-#define STRATEGY_C
+#ifndef STRATEGY2_C
+#define STRATEGY2_C
 
 // You can use this function/section to set up certain things for your strategies
 // For example, i use it to get certain item's GUID for ES_{EASY/MEDIUM/HARD} and more
@@ -29,14 +29,6 @@ const GUID NULLGUID =  {0x00000000,0x0000,0x0000,0x00,0x00,0x00,0x00,0x00,0x00,0
 
 // Just in case a future very complex strategy needs any of them
 void initialiseStrategies(void) {
-	return;
-}
-
-void preMapLoadTrigger(void) {
-	return;
-}
-
-void postMapLoadTrigger(void) {
 	return;
 }
 
@@ -194,7 +186,7 @@ const GUID* const strat_seq(itemrepoinfo* class) {
 
 // Caller Handlers
 const GUID* const getRandomItem_world(itemrepoinfo* class) {
-	switch (cini.worldInventoryRandomizer) {
+	switch (config.worldInventoryRandomizer) {
 		case ES_DISABLED:
 			return strat_disabled();
 		case ES_DEFAULT:
@@ -211,14 +203,14 @@ const GUID* const getRandomItem_world(itemrepoinfo* class) {
 			return &NULLGUID;
 		default:
 			ERR("Mode not implemented for world");
-			printStrategyFromEnum(cini.worldInventoryRandomizer);
+			printStrategyFromEnum(config.worldInventoryRandomizer);
 	} //switch
 	return NULL;
 }
 
 //Guards dont like snipers,shotgun; but like pistol,assaultrifle,smg; buggy on others
 const GUID* const getRandomItem_npc(itemrepoinfo* class) {
-	switch (cini.npcInventoryRandomizer) {
+	switch (config.npcInventoryRandomizer) {
 		case ES_DISABLED:
 			return strat_disabled();
 		case ES_DEFAULT:
@@ -250,13 +242,13 @@ const GUID* const getRandomItem_npc(itemrepoinfo* class) {
 			return &NULLGUID;
 		default:
 			ERR("Mode not implemented for npc");
-			printStrategyFromEnum(cini.npcInventoryRandomizer);
+			printStrategyFromEnum(config.npcInventoryRandomizer);
 	} //switch
 	return NULL;
 }
 
 const GUID* const getRandomItem_hero(itemrepoinfo* class) {
-	switch (cini.heroInventoryRandomizer) {
+	switch (config.heroInventoryRandomizer) {
 		case ES_DISABLED:
 			return strat_disabled();
 		case ES_DEFAULT:
@@ -273,13 +265,13 @@ const GUID* const getRandomItem_hero(itemrepoinfo* class) {
 			return &NULLGUID;
 		default:
 			ERR("Mode not implemented for hero");
-			printStrategyFromEnum(cini.heroInventoryRandomizer);
+			printStrategyFromEnum(config.heroInventoryRandomizer);
 	} //switch
 	return NULL;
 }
 
 const GUID* const getRandomItem_stash(itemrepoinfo* class) {
-	switch (cini.stashInventoryRandomizer) {
+	switch (config.stashInventoryRandomizer) {
 		case ES_DISABLED:
 			return strat_disabled();
 		case ES_DEFAULT:
@@ -296,7 +288,7 @@ const GUID* const getRandomItem_stash(itemrepoinfo* class) {
 			return &NULLGUID;
 		default:
 			ERR("Mode not implemented for stash");
-			printStrategyFromEnum(cini.stashInventoryRandomizer);
+			printStrategyFromEnum(config.stashInventoryRandomizer);
 	} //switch
 	return NULL;
 }
