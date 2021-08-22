@@ -4,8 +4,10 @@
 // Game Version
 typedef enum {
 	gvUNK,
-	gvDX11,
-	gvDX12
+	gvH2DX11,
+	gvH2DX12,
+	gvH1DX11,
+	gvH1DX12
 } gameversion;
 
 gameversion getGameVersion(void) {
@@ -18,12 +20,19 @@ gameversion getGameVersion(void) {
 
 	int timestamp = nt_header.FileHeader.TimeDateStamp;
 	switch (timestamp) {
+		// Hitman 2
 		case 0x5EE9D095: //pre last update
 		case 0x5F8D56D3: //last update
-			return gvDX12;
+			return gvH2DX12;
 		case 0x5EE9D065: //pre last update
 		case 0x5F8D57CA: //last update
-			return gvDX11;
+			return gvH2DX11;
+
+		// Hitman 2016
+		case 0x5F8ED8B9: //latest version
+			return gvH1DX11;
+		case 0x5F8ED8D0: //latest version
+			return gvH1DX12;
 		default:
 			ERR("Unknown Game Version: %X", timestamp);
 			return gvUNK;
@@ -44,34 +53,62 @@ typedef struct {
 	void* pPushHeroInventoryDetour;
 	void* pPushStashInventoryDetour;
 	void** pZEntitySceneContext_LoadScene;
+
+	// 2016 only
+	void* pPushSharedNpcWorld;
+	void* pPushWorldInventoryDetour2;
 } gamefunctions;
 static gamefunctions gfn = {0};
 
-uint32_t getGameFnPointers(void) {
-	switch (getGameVersion()) {
-	case gvDX12:
-		INFO("Game is DX12");
+gameversion getGameFnPointers(void) {
+	gameversion version = getGameVersion();
+	switch (version) {
+	case gvH2DX12:
+		INFO("Game is Hitman 2 DX12");
 		gfn.pPushItem = (void*)(0x140C24650);
 		gfn.pPushNPCInventoryDetour = (void*)(0x140C24BD0);
 		gfn.pPushWorldInventoryDetour = (void*)(0x140C24581);
 		gfn.pPushHeroInventoryDetour = (void*)(0x1405D7217);
 		gfn.pPushStashInventoryDetour = (void*)(0x14059039A);
 		gfn.pZEntitySceneContext_LoadScene = (void**)(0x1416AEE68);
-		return true;
-	case gvDX11:
-		INFO("Game is DX11");
+		return version;
+	case gvH2DX11:
+		INFO("Game is Hitman 2 DX11");
 		gfn.pPushItem = (void*)(0x140C24AF0);
 		gfn.pPushNPCInventoryDetour = (void*)(0x140C25070);
 		gfn.pPushWorldInventoryDetour = (void*)(0x140C24A21);
 		gfn.pPushHeroInventoryDetour = (void*)(0x1405D78F7);
 		gfn.pPushStashInventoryDetour = (void*)(0x140590A7A);
 		gfn.pZEntitySceneContext_LoadScene = (void**)(0x141693D70);
-		return true;
+		return version;
+	case gvH1DX11:
+		INFO("Game is Hitman 2016 DX11");
+		gfn.pPushItem = (void*)(0x140a70b50);
+		gfn.pPushHeroInventoryDetour = (void*)(0x14095d174);
+		gfn.pPushStashInventoryDetour = (void*)(0x14037281b);
+		gfn.pZEntitySceneContext_LoadScene = (void**)(0x141397928);
+
+		gfn.pPushSharedNpcWorld = (void*)(0x140a70ec0);
+		gfn.pPushNPCInventoryDetour = (void*)(0x1401b82ad);
+		gfn.pPushWorldInventoryDetour = (void*)(0x140a708e0);
+		gfn.pPushWorldInventoryDetour2 = (void*)(0x140a709a6);
+		return version;
+	case gvH1DX12:
+		INFO("Game is Hitman 2016 DX12");
+		gfn.pPushItem = (void*)(0x140a71ea0);
+		gfn.pPushHeroInventoryDetour = (void*)(0x14095e704);
+		gfn.pPushStashInventoryDetour = (void*)(0x14037319b);
+		gfn.pZEntitySceneContext_LoadScene = (void**)(0x14139e988);
+
+		gfn.pPushSharedNpcWorld = (void*)(0x140a72210);
+		gfn.pPushNPCInventoryDetour = (void*)(0x1401b79bd);
+		gfn.pPushWorldInventoryDetour = (void*)(0x140a71c30);
+		gfn.pPushWorldInventoryDetour2 = (void*)(0x140a71cf6);
+		return version;
 	default:
-		MessageBoxA(NULL, "Unsupported Game Version", "", 0);
-		return false;
+		return gvUNK;
 	} //switch
-	return false;
+	return gvUNK;
 }
 
 
@@ -133,8 +170,8 @@ void detourVFTCall(void** vft_entry_addr, void* hook_function, void** original_f
 
 #if 0
 // Might be useful in the future
-BOOL nopper(uint8_t* address, uint64_t size) {
-	SPAM("Nopping %p with size %lu", address, size);
+BOOL nopper(uint8_t* address, size_t size) {
+	SPAM("Nopping %p with size %llu", address, size);
 	DWORD oldProtection;
 	BOOL res = 0;
 	res = VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtection);
@@ -144,20 +181,20 @@ BOOL nopper(uint8_t* address, uint64_t size) {
 	uint8_t* debugaddress = address-3;
 	SPAM("Oldbytes:");
 	printf("\t");
-	for (uint64_t i = 0; i < size+6; i++) {
+	for (size_t i = 0; i < size+6; i++) {
 		printf("%02hhX ", *(debugaddress+i));
 	}
 	printf("\n");
 	//DEBUG
 
-	for (uint64_t i = 0; i < size; i++) {
+	for (size_t i = 0; i < size; i++) {
 		*(address+i) = 0x90; //NOP
 	}
 
 	//DEBUG
 	SPAM("Newbytes:");
 	printf("\t");
-	for (uint64_t i = 0; i < size+6; i++) {
+	for (size_t i = 0; i < size+6; i++) {
 		printf("%02hhX ", *(debugaddress+i));
 	}
 	printf("\n");
@@ -167,8 +204,8 @@ BOOL nopper(uint8_t* address, uint64_t size) {
 	return res;
 }
 
-BOOL patchbytes(uint8_t* address, uint8_t* newbytes, uint64_t size) {
-	SPAM("Patching %p with size %lu", address, size);
+BOOL patchbytes(uint8_t* address, uint8_t* newbytes, size_t size) {
+	SPAM("Patching %p with size %llu", address, size);
 	DWORD oldProtection;
 	BOOL res = 0;
 	res = VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtection);
@@ -178,20 +215,20 @@ BOOL patchbytes(uint8_t* address, uint8_t* newbytes, uint64_t size) {
 	uint8_t* debugaddress = address-3;
 	SPAM("Oldbytes:");
 	printf("\t");
-	for (uint64_t i = 0; i < size+6; i++) {
+	for (size_t i = 0; i < size+6; i++) {
 		printf("%02hhX ", *(debugaddress+i));
 	}
 	printf("\n");
 	//DEBUG
 
-	for (uint64_t i = 0; i < size; i++) {
+	for (size_t i = 0; i < size; i++) {
 		*(address+i) = *(newbytes+i);
 	}
 
 	//DEBUG
 	SPAM("Newbytes:");
 	printf("\t");
-	for (uint64_t i = 0; i < size+6; i++) {
+	for (size_t i = 0; i < size+6; i++) {
 		printf("%02hhX ", *(debugaddress+i));
 	}
 	printf("\n");
@@ -227,7 +264,7 @@ void printzstringguidw(void* p, char* name) {
 #endif
 
 
-// pushItem hooks
+#if defined(HITMAN2)
 typedef __int64(__fastcall *tPushItem)(void*, const GUID*, 
 										ZString*, void*, 
 										__int64, uint8_t, 
@@ -252,6 +289,51 @@ DEF_pushItem(world); //pushItemworld
 DEF_pushItem(npc); //pushItemnpc
 DEF_pushItem(hero); //pushItemhero
 DEF_pushItem(stash); //pushItemstash
+#endif
+
+
+#if defined(HITMAN2016)
+typedef __int64(__fastcall *tPushItem16)(void*, const GUID*,
+										void*, void*,
+										void*, void*,
+										void*, void*,
+										char);
+
+#define DEF_pushItem16(inventory) 																	\
+static int64_t __fastcall pushItem16##inventory (													\
+					void* worldInventory, const GUID* repoID, 										\
+					void* a3, void* a4, void* a5, void* a6, void* a7, 								\
+					void* a8, char a10) {															\
+	SPAM("pushItem for >%s< called", #inventory);													\
+	if (currentmap == LOCATION_SNIPER || currentmap == LOCATION_SKIPME)								\
+		return ((tPushItem16)gfn.pPushItem)(worldInventory, repoID, a3, a4, a5, a6, a7, a8, a10);	\
+																									\
+	const GUID* id;																					\
+	GETRANDOMITEM(id, inventory, repoID);															\
+	return ((tPushItem16)gfn.pPushItem)(worldInventory, id, a3, a4, a5, a6, a7, a8, a10);			\
+};
+DEF_pushItem16(hero); //pushItem16hero
+DEF_pushItem16(stash); //pushItem16stash
+
+typedef uint64_t(__fastcall *pushItemNpcWorldShared)(long long p1,const GUID* guid,
+														void* p3, uint64_t p4,
+														void* p5, void* p6);
+
+#define DEF_pushItem16_2(inventory) 															\
+static uint64_t __fastcall pushItem16##inventory(long long p1,const GUID* repoID,				\
+													void* p3, uint64_t p4,						\
+													void* p5, void* p6) {						\
+	SPAM("pushItem for >%s< called", #inventory);												\
+	if (currentmap == LOCATION_SNIPER || currentmap == LOCATION_SKIPME)							\
+		return ((pushItemNpcWorldShared)gfn.pPushSharedNpcWorld)(p1, repoID, p3, p4, p5, p6);	\
+																								\
+	const GUID* id;																				\
+	GETRANDOMITEM(id, inventory, repoID);														\
+	return ((pushItemNpcWorldShared)gfn.pPushSharedNpcWorld)(p1, id, p3, p4, p5, p6);		\
+}
+DEF_pushItem16_2(npc); //pushItem16npc
+DEF_pushItem16_2(world); //pushItem16world
+#endif
 
 
 // tLoadScene
@@ -265,7 +347,7 @@ uint64_t __fastcall LoadSceneDetour(void* this_, SSceneInitParameters* scene_ini
 	currentmap = SSceneInitParametersGetLocation(scene_init_params);
 
 	// Pick a random number if not specified in the config file
-	if (cini.RNGSeed == 0) {
+	if (config.RNGSeed == 0) {
 		struct timeval t;
 		mingw_gettimeofday(&t, NULL);
 		DWORD randomseed = (t.tv_usec * t.tv_sec * rand());
@@ -274,35 +356,51 @@ uint64_t __fastcall LoadSceneDetour(void* this_, SSceneInitParameters* scene_ini
 	}
 	else {
 		// We reset the seed to initial value every time if specified in the config file
-		srand(cini.RNGSeed);
+		srand(config.RNGSeed);
 	}
 
-	preMapLoadTrigger();
-
-	uint64_t ret = ((tLoadScene)gfn.pZEntitySceneContext_LoadScene)(this_, scene_init_params);
-
-	postMapLoadTrigger();
-
-	return ret;
+	return ((tLoadScene)gfn.pZEntitySceneContext_LoadScene)(this_, scene_init_params);
 }
 
 
-void hookGameFunctions(void) {
+int hookGameFunctions(void) {
 	SPAM("Get Game Functions");
-	if(!getGameFnPointers()) {
-		ERR("Unsupported Game Version");
-		ERR("Disabling Mod");
-		return;
-	}
+	gameversion version = getGameFnPointers();
 
 	SPAM("Hook Game Functions");
-	detourCall(gfn.pPushWorldInventoryDetour, pushItemworld);
-	detourCall(gfn.pPushNPCInventoryDetour, pushItemnpc);
-	detourCall(gfn.pPushHeroInventoryDetour, pushItemhero);
-	detourCall(gfn.pPushStashInventoryDetour, pushItemstash);
+	#if defined(HITMAN2)
+	if (version == gvH2DX11 || version == gvH2DX12) {
+		detourCall(gfn.pPushWorldInventoryDetour, pushItemworld);
+		detourCall(gfn.pPushNPCInventoryDetour, pushItemnpc);
+		detourCall(gfn.pPushHeroInventoryDetour, pushItemhero);
+		detourCall(gfn.pPushStashInventoryDetour, pushItemstash);
+	}
+	else if (version == gvH1DX11 || version == gvH1DX12) {
+		MessageBoxA(NULL, "Wrong DLL, use dinput8.dll.2016", "", 0);
+	}
+
+	#elif defined(HITMAN2016)
+	if (version == gvH1DX11 || version == gvH1DX12) {
+		detourCall(gfn.pPushHeroInventoryDetour, pushItem16hero);
+		detourCall(gfn.pPushStashInventoryDetour, pushItem16stash);
+
+		detourCall(gfn.pPushNPCInventoryDetour, pushItem16npc);
+		detourCall(gfn.pPushWorldInventoryDetour, pushItem16world);
+		detourCall(gfn.pPushWorldInventoryDetour2, pushItem16world);
+	}
+	else if (version == gvH2DX11 || version == gvH2DX12) {
+		MessageBoxA(NULL, "Wrong DLL, use dinput8.dll.2", "", 0);
+	}
+	#endif
+
+	else {
+		MessageBoxA(NULL, "Unknown Game Version, disabling mod", "", 0);
+		return 0;
+	}
+
 	detourVFTCall(gfn.pZEntitySceneContext_LoadScene, &LoadSceneDetour, (void**)&gfn.pZEntitySceneContext_LoadScene);
 	SPAM("Game Functions hooked!");
-	return;
+	return 1;
 };
 
 #endif

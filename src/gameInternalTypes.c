@@ -56,7 +56,7 @@ int32_t TaisShort(TArray* ta) {
 	if (str.len > 0xFFFF) //assuming strings aren't longer than 0xFFFF;
 		return false;
 	return true;
-#else // Yes, this works too, which is nice, keeping the original just in case
+#else // Yes, this works too, which is nice, keeping the original as reference
 	uint32_t len = *(uint32_t*)ta; //len is first param
 	if (len > 0xFFFF) //assuming strings aren't longer than 0xFFFF;
 		return false;
@@ -77,14 +77,6 @@ size_t Tasize(TArray* ta) {
 	return ta->end_ - ta->start_;
 }
 //sizeof(TArray) == 0x18;
-
-// We pass out as ptr because we add to it later again
-// Dont tamper with it unless you know what you are doing!
-void simplezstringhash(size_t* hash, ZString* zstr) {
-	for (uint32_t i = 0; i < zstr->len; i++) {
-		*hash += (size_t)zstr->chars[i];
-	}
-}
 
 typedef struct {
 	ZString m_SceneResource;
@@ -146,6 +138,14 @@ mn mapnames[SZMAPNAMES] = {
 	{{"salty"},			{"seagull"},	LOCATION_SNIPER},		// Hantu Port Sniper
 	{{"caged"},			{"falcon"},		LOCATION_SNIPER},		// Russia Sniper
 };
+
+// We pass out as ptr because we add to it later again
+// Dont tamper with it unless you know what you are doing!
+void simplezstringhash(size_t* hash, ZString* zstr) {
+	for (uint32_t i = 0; i < zstr->len; i++) {
+		*hash += (size_t)zstr->chars[i];
+	}
+}
 
 typedef struct {
 	size_t hash;
@@ -221,8 +221,10 @@ int32_t isFrontend(ZString* zstr) {
 }
 
 location SSceneInitParametersGetLocation(SSceneInitParameters* sip) {
-	if (isFrontend(&(sip->m_SceneResource)))
+	if (isFrontend(&(sip->m_SceneResource))) {
+		SPAM("Menu Screen - Skipping");
 		return LOCATION_SKIPME;
+	}
 
 	//if hash not found, we default to mapname::professional
 	location emap = findMapName(&(sip->m_SceneResource));

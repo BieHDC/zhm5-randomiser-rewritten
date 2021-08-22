@@ -4,7 +4,7 @@
 // returns printf-able name
 // returns item class ptr in class
 const char noname[] = "UNKNOWN";
-const char* const findItemInformation(const GUID* guid, itemrepoinfo** iteminfo, int32_t dir) {
+const char* const itemFindInformation(const GUID* guid, itemrepoinfo** iteminfo, int32_t dir) {
 	LOOPALLITEMS
 			if (IsEqualGUID(guid, item->guid)) {
 				*iteminfo = currentclass;
@@ -20,13 +20,13 @@ const char* const findItemInformation(const GUID* guid, itemrepoinfo** iteminfo,
 }
 
 #ifdef DEBUG
-#define findItemInformationW(g,i,d) findItemInformation(g,i,d)
+#define itemFindInformationOpt(g,i,d) itemFindInformation(g,i,d)
 #else
-#define findItemInformationW(g,i,d)
+#define itemFindInformationOpt(g,i,d)
 #endif
 
 
-int isSkippedItem(const GUID* id, int ext) {
+int itemIsSkipped(const GUID* id, int ext) {
 	if (!ext) {
 		for (size_t i = 0; i < questitemARRLEN; i++) {
 			if (IsEqualGUID(id, questitem_guid_name[i].guid)) {
@@ -41,17 +41,16 @@ int isSkippedItem(const GUID* id, int ext) {
 
 #define GETRANDOMITEM(id, inventory, repoID) 									\
 	itemrepoinfo* class = NULL;													\
-	const char* itemname = findItemInformation(repoID, &class, 0);				\
+	const char* itemname = itemFindInformation(repoID, &class, 0);				\
 	if (!class) {																\
 		INFO("Unknown item, ignoring...");										\
-		printf_guid(*repoID);													\
-		(void)itemname;	/*mingw thinks its unused otherwise*/					\
+		printf_guid(*repoID); /* Ignored item, but you can double check */		\
+		(void)itemname;															\
 		id = repoID;															\
 	} 																			\
 	else {																		\
-																				\
 		/*if extended mode is off, we ignore questitems and dont replace them*/	\
-		if (isSkippedItem(repoID, cini. inventory## InventoryIsExtended)) {		\
+		if (itemIsSkipped(repoID, config. inventory## InventoryIsExtended)) {	\
 			id = repoID;														\
 		}																		\
 		else {																	\
@@ -59,7 +58,7 @@ int isSkippedItem(const GUID* id, int ext) {
 			if (!id) {															\
 				id = repoID;													\
 			}																	\
-			findItemInformationW(id, &class, 1);								\
+			itemFindInformationOpt(id, &class, 1);								\
 		}																		\
 	} 																			\
 

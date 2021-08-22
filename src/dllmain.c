@@ -8,15 +8,21 @@
 #ifdef DEBUG
 #warning DEBUG MODE ON
 #endif
+
 #include "utils.h"
-
-
-#include "resources/Repository.c"
 #include "types.h"
 #include "globals.h"
 #include "config.c"
 #include "gameInternalTypes.c"
-#include "strategy.c" // The file you are likely interested in
+#if defined(HITMAN2)
+	#include "resources/REPO_hitman2/Repository2.c"
+	#include "strategy2.c" // The file you are likely interested in
+#elif defined(HITMAN2016)
+	#include "resources/REPO_hitman2016/Repository2016.c"
+	#include "strategy2016.c" // The file you are likely interested in
+#else
+	#error PLEASE DEFINE A HITMAN VERSION (HITMAN2,HITMAN2016)
+#endif
 #include "randomiser.c"
 #include "gameInternalsHook.c"
 
@@ -42,6 +48,7 @@ __declspec(dllexport) HRESULT __stdcall DirectInput8Create(HINSTANCE hinst, DWOR
 }
 
 /* TODO
+	Ingame GUI...?
 	Lots of fun things to add.
 */
 
@@ -49,10 +56,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 	switch (reason) {
 	case DLL_PROCESS_ATTACH: {
 		INFO("Randomiser Starting");
-		loadConfig();
-		initialiseStrategies();
-		hookGameFunctions();
-		INFO("Everything loaded!");
+		if (hookGameFunctions()) {
+			loadConfig();
+			initialiseStrategies();
+			INFO("Everything loaded!");
+		}
+		else {
+			ERR("Failed to start the randomiser");
+		}
     	return TRUE;
 	} break;
     case DLL_THREAD_ATTACH:

@@ -35,31 +35,31 @@ void loadConfig() {
 
 	//Randomisation Strategy
 	LOAD_INI_STRING_ENTRY(worldInventoryRandomizer, "ZHM5Randomizer", "FUN+");
-	cini.worldInventoryRandomizer = getStrategyFromString(worldInventoryRandomizer, 
-		&cini.worldInventoryIsExtended);
-	printStrategyFromEnum(cini.worldInventoryRandomizer);
+	config.worldInventoryRandomizer = getStrategyFromString(worldInventoryRandomizer,
+		&config.worldInventoryIsExtended);
+	printStrategyFromEnum(config.worldInventoryRandomizer);
 
 	LOAD_INI_STRING_ENTRY(npcInventoryRandomizer, "ZHM5Randomizer", "DEFAULT");
-	cini.npcInventoryRandomizer = getStrategyFromString(npcInventoryRandomizer, 
-		&cini.npcInventoryIsExtended);
-	printStrategyFromEnum(cini.npcInventoryRandomizer);
+	config.npcInventoryRandomizer = getStrategyFromString(npcInventoryRandomizer,
+		&config.npcInventoryIsExtended);
+	printStrategyFromEnum(config.npcInventoryRandomizer);
 
 	LOAD_INI_STRING_ENTRY(heroInventoryRandomizer, "ZHM5Randomizer", "DEFAULT");
-	cini.heroInventoryRandomizer = getStrategyFromString(heroInventoryRandomizer, 
-		&cini.heroInventoryIsExtended);
-	printStrategyFromEnum(cini.heroInventoryRandomizer);
+	config.heroInventoryRandomizer = getStrategyFromString(heroInventoryRandomizer,
+		&config.heroInventoryIsExtended);
+	printStrategyFromEnum(config.heroInventoryRandomizer);
 
 	LOAD_INI_STRING_ENTRY(stashInventoryRandomizer, "ZHM5Randomizer", "FUN");
-	cini.stashInventoryRandomizer = getStrategyFromString(stashInventoryRandomizer, 
-		&cini.stashInventoryIsExtended);
-	printStrategyFromEnum(cini.stashInventoryRandomizer);
+	config.stashInventoryRandomizer = getStrategyFromString(stashInventoryRandomizer,
+		&config.stashInventoryIsExtended);
+	printStrategyFromEnum(config.stashInventoryRandomizer);
 
-	INFO("Extended flags W:%i N:%i H:%i S:%i", cini.worldInventoryIsExtended, cini.npcInventoryIsExtended, 
-		cini.heroInventoryIsExtended, cini.stashInventoryIsExtended);
+	INFO("Extended flags W:%i N:%i H:%i S:%i", config.worldInventoryIsExtended, config.npcInventoryIsExtended,
+		config.heroInventoryIsExtended, config.stashInventoryIsExtended);
 
 	DWORD RNGSeed;
 	LOAD_INI_ENTRY(RNGSeed,	"ZHM5Randomizer", 0);
-	cini.RNGSeed = RNGSeed;
+	config.RNGSeed = RNGSeed;
 
 	free(fullpath);
 	free(basepath);
@@ -68,11 +68,11 @@ void loadConfig() {
 	load_defaults2:
 	free(basepath);
 	load_defaults1:
-	cini.worldInventoryRandomizer = ES_FUN;
-	cini.npcInventoryRandomizer = ES_DEFAULT;
-	cini.heroInventoryRandomizer = ES_DEFAULT;
-	cini.stashInventoryRandomizer = ES_FUN;
-	cini.RNGSeed = 0;
+	config.worldInventoryRandomizer = ES_FUN;
+	config.npcInventoryRandomizer = ES_DEFAULT;
+	config.heroInventoryRandomizer = ES_DEFAULT;
+	config.stashInventoryRandomizer = ES_FUN;
+	config.RNGSeed = 0;
 }
 
 
